@@ -146,30 +146,46 @@ var PasswordDialogAssistant = Class.create ({
 	              autoReplace: false,
 	              textCase: Mojo.Widget.steModeLowerCase,
 	              enterSubmits: true,
-	              requiresEnterKey: true
+	              requiresEnterKey: true,
+                focusMode:Mojo.Widget.focusAppendMode
 	        },
 	        this.passwordModel = {value: ''});
 	
 	    this.controller.listen("password", Mojo.Event.propertyChange,
 	        this.keyPressHandler.bind(this));
-	    
+      this.digithadler=this.pressdigit.bindAsEventListener(this);
+      for (var i=0; i<10 ;i++)
+      {
+        var wname=String(i);
+        Mojo.Log.info("wname=",wname);
+        this.controller.setupWidget(wname, {},
+	        {label: String(i), disabled: false});
+        this.controller.listen(wname, Mojo.Event.tap,
+		    	this.digithadler);
+      }
+      this.clearHandler = this.clear.bindAsEventListener(this);
+      this.controller.setupWidget("clearButton", {},
+	        {label: $L("Clear"), disabled: false});	    
 	    this.unlockButtonModel = {label: $L("Unlock"), disabled: false};
 	    this.controller.setupWidget("unlockButton", {type: Mojo.Widget.defaultButton},
 	        this.unlockButtonModel);
 	    this.unlockHandler = this.unlock.bindAsEventListener(this);
 	    this.controller.listen("unlockButton", Mojo.Event.tap,
 	        this.unlockHandler);
-	    
+	    this.controller.listen("clearButton", Mojo.Event.tap,
+		    	this.clearHandler);
 	    if (! this.noCancel) {
 		    this.cancelButtonModel = {label: $L("Cancel"), disabled: false};
 		    this.controller.setupWidget("cancelButton", {type: Mojo.Widget.defaultButton},
 		        this.cancelButtonModel);
 		    this.controller.listen("cancelButton", Mojo.Event.tap,
 		    	this.widget.mojo.close);
+        
 	    }
 	},
 	
 	keyPressHandler: function(event) {
+    if(!event.originalEvent)return;
 		if (Mojo.Char.isEnterKey(event.originalEvent.keyCode)) {
 		    this.unlock();
 		}
@@ -189,7 +205,21 @@ var PasswordDialogAssistant = Class.create ({
 			this.controller.get("password").mojo.focus.delay(0.25);
 		}
 	},
-
+  pressdigit:function() {
+    var widget=this.controller.get(event.target.parentNode.parentNode.parentNode.id);
+    Mojo.Log.info("pressdigit() from",event.target.parentNode.parentNode.parentNode.id);
+    var pass=this.controller.get("password").mojo.getValue();
+    pass+=widget.id;
+    Mojo.Log.info(widget.id);
+    this.controller.get("password").mojo.focus();
+    this.controller.get("password").mojo.setValue(pass);
+    
+  },
+  clear: function() {
+    this.controller.get("password").mojo.focus();
+    this.controller.get("password").mojo.setValue("");
+    this.controller.get("password").mojo.blur();
+  },
 	//cleanup  - remove listeners
 	cleanup: function() {
 		this.controller.stopListening("unlockButton", Mojo.Event.tap,
@@ -200,6 +230,8 @@ var PasswordDialogAssistant = Class.create ({
 		}
 		this.controller.stopListening("password", Mojo.Event.propertyChange,
 	        this.keyPressHandler.bind(this));
+    this.controller.stopListening("clearButton", Mojo.Event.tap,
+		    	this.clearHandler);
 	}
 });
 

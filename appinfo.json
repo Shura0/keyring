@@ -1,7 +1,7 @@
 {
-	"id": "com.otisbean.keyring",
-	"version": "1.0.0",
-	"vendor": "Otisbean",
+	"id": "ru.shura0.keyring",
+	"version": "0.0.4",
+	"vendor": "Shura",
 	"type": "web",
 	"main": "index.html",
 	"title": "Keyring",
@@ -10,5 +10,6 @@
 	"splashicon": "icon256.png",
 	"splashBackground": "images/splash-screen.png",
     "removable": "true",
-    "visible": "true"
+    "visible": "true",
+    "uiRevision": 2
 }
