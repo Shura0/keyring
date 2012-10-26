@@ -1,7 +1,13 @@
 {
+<<<<<<< HEAD
 	"id": "com.otisbean.keyring",
 	"version": "0.4.0",
 	"vendor": "Otisbean",
+=======
+	"id": "ru.shura0.keyring",
+	"version": "0.0.4",
+	"vendor": "Shura",
+>>>>>>> new
 	"type": "web",
 	"main": "index.html",
 	"title": "Keyring",
@@ -11,5 +17,9 @@
 	"splashBackground": "images/splash-screen.png",
     "removable": "true",
     "visible": "true",
+<<<<<<< HEAD
     "noWindow" : "true"
+=======
+    "uiRevision": 2
+>>>>>>> new
 }

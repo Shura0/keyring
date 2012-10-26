@@ -53,3 +53,213 @@ StageAssistant.prototype.windowDeactivated = function() {
 			// noLock, do nothing
 	}
 };
+<<<<<<< HEAD
+=======
+
+/**
+ * handleCommand - called to handle app menu selections
+*/ 
+StageAssistant.prototype.handleCommand = function(event) {    
+	var currentScene = this.controller.activeScene();
+
+	if(event.type === Mojo.Event.command) {
+	    switch(event.command) {
+	        case "do-aboutKeyring":
+	        	this.ring.updateTimeout();
+	            currentScene.showAlertDialog({
+	                onChoose: function(value) {},
+	                title: $L("Keyring — Easy password management"),
+	                message: $L("Version #{version} Copyright 2009-2010, Dirk Bergstrom.  Released under the GPLv3.").interpolate({version: Keyring.version}),
+	                choices:[{label:$L("OK"), value:""}]
+	            });
+	        break;
+	         
+	        case "do-keyRingPrefs":
+	        	Keyring.doIfPasswordValid(currentScene, this.ring,
+					this.controller.pushScene.
+					bind(this.controller, "preferences", this.ring)
+				);
+        	break;
+	         
+	        case "do-keyRingActions":
+	        	Keyring.doIfPasswordValid(currentScene, this.ring,
+					this.controller.pushScene.
+					bind(this.controller, "actions", this.ring)
+				);
+        	break;
+	        	
+	        case "do-keyRingCategories":
+	        	Keyring.doIfPasswordValid(currentScene, this.ring,
+	        			this.controller.pushScene.
+	        			bind(this.controller, "categories", this.ring)
+	        	);
+	        	break;
+	        	
+	        case "do-keyRingHelp":
+	        	this.ring.updateTimeout();
+	            this.controller.pushScene("help", this.ring);
+	        break;
+	    }
+	}
+};
+
+/*
+ * The "Enter your password" dialog, used throughout the application.
+ */
+var PasswordDialogAssistant = Class.create ({
+	initialize: function(controller, ring, callback, noCancel) {
+		this.controller = controller;
+	    this.ring = ring;
+	    this.callbackOnSuccess = callback;
+	    this.noCancel = noCancel ? true : false;
+	},
+
+	setup: function(widget) {
+	    this.widget = widget;
+	    
+	    this.controller.get("password-title").update($L("Enter Password to Unlock"));
+	        
+	    this.controller.setupWidget(
+	        "password",
+	        {
+	              hintText: $L("Password"),
+	              autoFocus: true,
+	              changeOnKeyPress: true,
+	              limitResize: true,
+	              autoReplace: false,
+	              textCase: Mojo.Widget.steModeLowerCase,
+	              enterSubmits: true,
+	              requiresEnterKey: true,
+                focusMode:Mojo.Widget.focusAppendMode
+	        },
+	        this.passwordModel = {value: ''});
+	
+	    this.controller.listen("password", Mojo.Event.propertyChange,
+	        this.keyPressHandler.bind(this));
+      this.digithadler=this.pressdigit.bindAsEventListener(this);
+      for (var i=0; i<10 ;i++)
+      {
+        var wname=String(i);
+        Mojo.Log.info("wname=",wname);
+        this.controller.setupWidget(wname, {},
+	        {label: String(i), disabled: false});
+        this.controller.listen(wname, Mojo.Event.tap,
+		    	this.digithadler);
+      }
+      this.clearHandler = this.clear.bindAsEventListener(this);
+      this.controller.setupWidget("clearButton", {},
+	        {label: $L("Clear"), disabled: false});	    
+	    this.unlockButtonModel = {label: $L("Unlock"), disabled: false};
+	    this.controller.setupWidget("unlockButton", {type: Mojo.Widget.defaultButton},
+	        this.unlockButtonModel);
+	    this.unlockHandler = this.unlock.bindAsEventListener(this);
+	    this.controller.listen("unlockButton", Mojo.Event.tap,
+	        this.unlockHandler);
+	    this.controller.listen("clearButton", Mojo.Event.tap,
+		    	this.clearHandler);
+	    if (! this.noCancel) {
+		    this.cancelButtonModel = {label: $L("Cancel"), disabled: false};
+		    this.controller.setupWidget("cancelButton", {type: Mojo.Widget.defaultButton},
+		        this.cancelButtonModel);
+		    this.controller.listen("cancelButton", Mojo.Event.tap,
+		    	this.widget.mojo.close);
+        
+	    }
+	},
+	
+	keyPressHandler: function(event) {
+    if(!event.originalEvent)return;
+		if (Mojo.Char.isEnterKey(event.originalEvent.keyCode)) {
+		    this.unlock();
+		}
+	},
+
+	unlock: function() {
+		Mojo.Log.info("unlock");
+		if (this.ring.validatePassword(this.passwordModel.value)) {
+			Mojo.Log.info("Password accepted");
+			this.widget.mojo.close();
+			this.callbackOnSuccess();
+		} else {
+			Mojo.Log.info("Bad Password");
+			// TODO select random insult from the sudo list
+			// FIXME apply some decent styling to the error message
+			this.controller.get("errmsg").update($L("Invalid Password"));
+			this.controller.get("password").mojo.focus.delay(0.25);
+		}
+	},
+  pressdigit:function() {
+    var widget=this.controller.get(event.target.parentNode.parentNode.parentNode.id);
+    Mojo.Log.info("pressdigit() from",event.target.parentNode.parentNode.parentNode.id);
+    var pass=this.controller.get("password").mojo.getValue();
+    pass+=widget.id;
+    Mojo.Log.info(widget.id);
+    this.controller.get("password").mojo.focus();
+    this.controller.get("password").mojo.setValue(pass);
+    
+  },
+  clear: function() {
+    this.controller.get("password").mojo.focus();
+    this.controller.get("password").mojo.setValue("");
+    this.controller.get("password").mojo.blur();
+  },
+	//cleanup  - remove listeners
+	cleanup: function() {
+		this.controller.stopListening("unlockButton", Mojo.Event.tap,
+		    this.unlockHandler);
+		if (! this.noCancel) {
+			this.controller.stopListening("cancelButton", Mojo.Event.tap,
+				this.widget.mojo.close);
+		}
+		this.controller.stopListening("password", Mojo.Event.propertyChange,
+	        this.keyPressHandler.bind(this));
+    this.controller.stopListening("clearButton", Mojo.Event.tap,
+		    	this.clearHandler);
+	}
+});
+
+/* If the user has entered a valid password within the timeout window, or they
+ * enter it into the dialog, return true. */
+Keyring.doIfPasswordValid = function(sceneController, ring, callback, preventCancel) {
+	if (ring.passwordValid()) {
+		callback();
+	} else {
+		sceneController.showDialog({
+			template: "password-dialog",
+			preventCancel: preventCancel ? true : false,
+			assistant: new PasswordDialogAssistant(sceneController, ring,
+				callback, preventCancel)
+		});
+	}
+};
+
+/* Called by scenes on timeout or app deactivation/minimization. */
+Keyring.lockout = function(stageController, ring) {
+	var sceneName = stageController.topScene().sceneName;
+	Mojo.Log.info("Timeout or Deactivate in scene", sceneName);
+	ring.clearPassword();
+	if (ring.prefs.lockoutTo === 'close-app') {
+		stageController.popScenesTo('locked');
+	} else if (sceneName !== ring.prefs.lockoutTo) {
+		// Don't pop scene if we're already on the lockoutTo page.
+		stageController.popScenesTo(ring.prefs.lockoutTo);
+	}
+};
+
+Keyring.activateLockout = function(sceneAssistant) {
+	Mojo.Log.info("activateLockout for scene",
+		sceneAssistant.controller.stageController.topScene().sceneName);
+	// Clear password after idle timeout
+	sceneAssistant.cancelIdleTimeout = sceneAssistant.controller.setUserIdleTimeout(
+		sceneAssistant.controller.sceneElement,
+		Keyring.lockout.bind(Keyring, sceneAssistant.controller.stageController, sceneAssistant.ring),
+		sceneAssistant.ring.prefs.timeout);
+};
+
+
+Keyring.deactivateLockout = function(sceneAssistant) {
+	Mojo.Log.info("deactivateLockout for scene",
+		sceneAssistant.controller.stageController.topScene().sceneName);
+	sceneAssistant.cancelIdleTimeout();
+};
+>>>>>>> new
